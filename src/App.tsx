@@ -3,40 +3,55 @@ import solidLogo from "./assets/solid.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
 import { startFromFile, rawData } from "./audioSource";
-import { arc } from "d3";
+import { arc, interpolateSinebow, interpolateInferno } from "d3";
 import type { Component } from "solid-js";
 
 const arcBuilder = arc();
 
-const RadialGraph: Component = () => {
-  const paths = createMemo(() => {
+const RadialGraph: Component<{
+  color: (value: number) => string;
+  scale: number;
+}> = ({ color, scale }) => {
+  const computed = createMemo(() => {
     const data = rawData();
-    let currentAngle = 0;
+
+    const total = data.reduce((a, v) => a + v, 0);
+
+    const highCount = data.filter((d) => d > 32).length;
+    const intensity = highCount / data.length;
 
     const paths: {
       path: string;
       color: string;
     }[] = [];
 
+    const range = 1.0 + intensity;
+    const rangeInRadians = range * Math.PI;
+    const startAngle = -(rangeInRadians / 2);
+    let currentAngle = startAngle;
+
     for (const d of data) {
+      const angle = rangeInRadians * (d / total);
       const path = arcBuilder({
-        innerRadius: 50 - (d / 255) * 35,
-        outerRadius: 50 + (d / 255) * 35,
+        innerRadius: 50 - ((d + 10) / 255) * 35,
+        outerRadius: 50 + ((d + 10) / 255) * 35,
         startAngle: currentAngle,
-        endAngle: currentAngle + Math.PI * 0.1,
+        endAngle: currentAngle + angle,
       })!;
       paths.push({
         path,
-        color: "blue",
+        color: color(d / 255),
       });
-      currentAngle += Math.PI * 0.1;
+      currentAngle += angle;
     }
-    return paths;
-  });
 
+    return { paths, intensity };
+  });
   return (
-    <g>
-      <For each={paths()}>{(p) => <path d={p.path} fill={p.color} />}</For>
+    <g transform={`scale(${computed().intensity * scale + 1})`}>
+      <For each={computed().paths}>
+        {(p) => <path d={p.path} fill={p.color} />}
+      </For>
     </g>
   );
 };
@@ -64,14 +79,15 @@ function App() {
       <div class="card">
         <button onClick={handleStart}>Play</button>
       </div>
-      <div class="card">
+      <div class="card" style={{ height: "50vh", width: "50vw" }}>
         <svg
           width="100%"
           height="100%"
           viewBox="-100 -100 200 200"
           preserveAspectRatio="xMidYMid meet"
         >
-          <RadialGraph />
+          <RadialGraph color={interpolateSinebow} scale={2.5} />
+          <RadialGraph color={interpolateInferno} scale={1.5} />
         </svg>
       </div>
     </>

@@ -24,7 +24,8 @@ export const startFromFile = async () => {
 
   const update = () => {
     analyzer.getByteFrequencyData(dataArray);
-    setRawData(Array.from(dataArray));
+    const arr = Array.from(dataArray);
+    setRawData(arr);
     requestAnimationFrame(update);
   };
 

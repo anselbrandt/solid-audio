@@ -25,7 +25,7 @@ const RadialGraph: Component<{
       color: string;
     }[] = [];
 
-    const range = 1.0 + intensity;
+    const range = 1 + intensity;
     const rangeInRadians = range * Math.PI;
     const startAngle = -(rangeInRadians / 2);
     let currentAngle = startAngle;
